@@ -382,10 +382,13 @@ void netmd_transfer_song_packets(netmd_dev_handle *dev,
         free(packet);
         buf = NULL;
 
-        if (error >= 0) {
+	/* continue only if transfer finished normally */
+        if (error == 0) {
             p = p->next;
         }
-        break;
+        else {
+            break;
+        }
     }
 }
 
