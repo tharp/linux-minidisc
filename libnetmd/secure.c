@@ -370,9 +370,9 @@ void netmd_transfer_song_packets(netmd_dev_handle *dev,
         memcpy(buf + 8, p->iv, 8);
         memcpy(buf + 16, p->data, p->length);
 
-        /* set usb timeout according to the packet size, ~ 3 - 3,5 sec/1MB */
-        usb_timeout = packet_size/300;
-        netmd_log(NETMD_LOG_VERBOSE, "setting usb timeout : %d seconds\n", usb_timeout/1000);
+        /* set usb timeout to a reasonable value since the packet size can be quite small */
+        usb_timeout = 60000;
+        netmd_log(NETMD_LOG_VERBOSE, "sending %d bytes and setting usb timeout to %d seconds\n", packet_size, usb_timeout/1000);
 
         /* ... send it */
         error = libusb_bulk_transfer((libusb_device_handle*)dev, 2, packet, (int)packet_size, &transferred, usb_timeout);
@@ -382,10 +382,13 @@ void netmd_transfer_song_packets(netmd_dev_handle *dev,
         free(packet);
         buf = NULL;
 
-        if (error >= 0) {
+	/* continue only if transfer finished normally */
+        if (error == 0) {
             p = p->next;
         }
-        break;
+        else {
+            break;
+        }
     }
 }
 
@@ -395,7 +398,8 @@ netmd_error netmd_prepare_packets(unsigned char* data, size_t data_lenght,
                                   unsigned char *key_encryption_key, netmd_wireformat format)
 {
     size_t position = 0;
-    size_t chunksize = 0xffffffffU;
+    /* if packet size gets bigger libusb can not handle it and throws a "-1" - determined by trial and error :D */
+    size_t chunksize = 0xff0000U;
     size_t frame_size = netmd_get_frame_size(format);
     netmd_track_packets *last = NULL;
     netmd_track_packets *next = NULL;
