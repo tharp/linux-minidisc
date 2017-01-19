@@ -395,7 +395,8 @@ netmd_error netmd_prepare_packets(unsigned char* data, size_t data_lenght,
                                   unsigned char *key_encryption_key, netmd_wireformat format)
 {
     size_t position = 0;
-    size_t chunksize = 0xffffffffU;
+    /* if packet size gets bigger libusb can not handle it and throws a "-1" - determined by trial and error :D */
+    size_t chunksize = 0xff0000U;
     size_t frame_size = netmd_get_frame_size(format);
     netmd_track_packets *last = NULL;
     netmd_track_packets *next = NULL;
